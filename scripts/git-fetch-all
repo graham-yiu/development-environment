@@ -1,0 +1,41 @@
+#!/bin/bash
+
+################################################################################
+# User configurations
+################################################################################
+git_metadata_dir=.git
+git_cmd=git
+################################################################################
+
+Usage() {
+cat << EOF
+Usage: $(basename $0)
+
+   Runs 'git fetch' for all repos under the current directory 
+EOF
+}
+
+if [ $# -gt 0 ]; then
+  Usage
+  exit 1
+fi
+
+current_dir=$PWD
+log_file=$current_dir/$(basename $0).log
+
+if [ ! -d $current_dir/$git_metadata_dir ]; then
+  echo "ERROR: Cannot find \'$git_metadata_dir\' metadata in \'$current_dir\'."
+  exit 1
+fi
+
+repos=$(find $PWD -name $git_metadata_dir -type d | sed -e 's|/\.git$||')
+
+rm -f $log_file
+for repo in $repos; do
+  printf "Fetching $repo ... "
+  cd $repo
+  $git_cmd fetch >>$log_file 2>&1
+  rc=$?
+  echo RC=$rc
+  if [ $rc -ne 0 ]; then exit $rc; fi
+done

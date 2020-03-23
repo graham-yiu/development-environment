@@ -1,0 +1,15 @@
+#!/bin/bash
+
+Usage() {
+cat << EOF
+Usage: $(basename $0) <search> <replace>
+EOF
+}
+
+if [ $# -lt 2 ]; then
+  Usage
+  exit 1
+fi
+
+printf "Search for all instances of '$1' in PATH, and replace with '$2' ... "
+echo export PATH=$(echo $PATH |sed -e 's|$1|$2|g')

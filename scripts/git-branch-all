@@ -1,0 +1,67 @@
+#!/bin/bash
+
+################################################################################
+# User configurations
+################################################################################
+git_metadata_dir=.git
+git_cmd=git
+################################################################################
+
+get_branch() {
+  git branch 2>/dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/'
+}
+
+
+Usage() {
+cat << EOF
+This tool will recursively update all local Git repositories under current 
+directory.
+
+Usage: $(basename $0) [<branch_name>] [-h]
+
+   <branch_name>   (Optional) Name of branch to checkout before pull.
+   [-]-[hH]        Display this help message.
+   
+   With no arguments, it will pull from the current upstream branch.
+EOF
+}
+
+if [ $# -gt 1 ]; then
+  Usage
+  exit 1
+fi
+
+branch=
+# If user provided argument, use as branch
+if [ -n "$1" ]; then
+  # Print Usage
+  if [ `expr $1 : "-*-[hH]"` -gt 0 ]; then
+    Usage
+    exit 1
+  fi
+  branch=$1
+fi
+
+current_dir=$PWD
+log_file=$current_dir/$(basename $0).log
+
+if [ ! -d $current_dir/$git_metadata_dir ]; then
+  echo "ERROR: Cannot find \'$git_metadata_dir\' metadata in \'$current_dir\'."
+  exit 1
+fi
+
+repos=$(find $PWD -name $git_metadata_dir -type d | sed -e 's|/\.git$||')
+
+rm -f $log_file
+for repo in $repos; do
+  printf "Updating $repo($(get_branch))... "
+  cd $repo
+  $git_cmd pull -r >>$log_file 2>&1
+  rc=$?
+  if [ $rc -ne 0 ]; then 
+    echo ERROR: RC=$rc
+    exit $rc
+  else
+    echo success
+  fi
+done

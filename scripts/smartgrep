@@ -1,0 +1,17 @@
+#!/bin/bash
+set -x
+
+grep --exclude-dir=test \
+  --exclude-dir=docs \
+  --exclude-dir=cmake \
+  --exclude-dir=.git \
+  --exclude=broken*.* \
+  --exclude=*.patch \
+  --exclude=cmake \
+  --exclude=tags \
+  --exclude=cscope*.out \
+  --exclude=.*.sw* \
+  --exclude=*.log \
+  --exclude=CMakeLists.* \
+  "$@"
+

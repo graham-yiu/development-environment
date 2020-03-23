@@ -1,0 +1,93 @@
+#!/bin/bash
+
+################################################################################
+# User configurations
+################################################################################
+git_metadata_dir=.git
+git_cmd=git
+################################################################################
+
+get_branch() {
+  git branch 2>/dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/\1/'
+}
+
+Usage() {
+cat << EOF
+This tool will recursively update all local Git repositories under current 
+directory.
+
+Usage: $(basename $0) [<branch_name>] [-h]
+
+   <branch_name>   (Optional) Name of branch to checkout before pull.
+   [-]-[hH]        Display this help message.
+   
+   With no arguments, it will pull from the current upstream branch.
+EOF
+}
+
+if [ $# -gt 1 ]; then
+  Usage
+  exit 1
+fi
+
+branch=
+# If user provided argument, use as branch
+if [ -n "$1" ]; then
+  # Print Usage
+  if [ `expr $1 : "-*-[hH]"` -gt 0 ]; then
+    Usage
+    exit 1
+  fi
+  branch=$1
+fi
+
+current_dir=$PWD
+log_file=$current_dir/$(basename $0).log
+
+if [ ! -d $current_dir/$git_metadata_dir ]; then
+  echo "ERROR: Cannot find \'$git_metadata_dir\' metadata in \'$current_dir\'."
+  exit 1
+fi
+
+repos=$(find $PWD -name $git_metadata_dir -type d | sed -e 's|/\.git$||')
+
+# Update to $branch if specified by user
+if [ -n "$branch" ]; then
+  for repo in $repos; do
+    printf "Checkout $branch for $repo ... "
+    cd $repo
+    #current_branch=$($git_cmd status | grep "^On branch " | sed -e 's|On branch \([^ ]\{1,\}\)|\1|')
+    current_branch=$(get_branch)
+    if [ -z "$current_branch" ]; then
+      echo "ERROR: could not determine current branch in $repo."
+      cd $current_dir
+      exit 1
+    fi
+    if [ "$current_branch" != $branch ]; then
+      $git_cmd checkout $branch
+      rc=$?
+      if [ $rc -ne 0 ]; then
+        echo "ERROR: Could not switch to branch '$branch' in $repo. RC=$rc."
+        cd $current_dir
+        exit 1
+      else
+        echo "success"
+      fi
+    fi
+    echo "done!"
+  done
+fi
+
+rm -f $log_file
+for repo in $repos; do
+  printf "Updating $repo($(get_branch))... "
+  cd $repo
+  $git_cmd pull -r >>$log_file 2>&1
+  rc=$?
+  if [ $rc -ne 0 ]; then 
+    echo ERROR: RC=$rc
+    exit $rc
+  else
+    echo success
+  fi
+done

@@ -1,0 +1,8 @@
+#!/bin/bash
+
+numResults=10
+if [ -n "$1" ]; then
+  numResults=$1
+fi
+
+du -ms * | sort -nr | head -$numResults 2>/dev/null

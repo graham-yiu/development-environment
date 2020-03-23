@@ -1,0 +1,75 @@
+#!/bin/bash
+
+first_level_dirs="\
+bfd \
+binutils \
+config \
+cpu \
+elfcpp \
+etc \
+gas \
+gold \
+gprof \
+include \
+intl \
+ld \
+libiberty \
+opcodes \
+texinfo \
+"
+
+file_suffix="\
+c \
+cpp \
+h \
+hpp \
+"
+
+echo "Using ctags from $(which ctags)"
+echo "Using cscope from $(which cscope)"
+# If directory contains at least type in $file_suffix, print the directory to stdout
+find_interesting_subdirs() {
+  typeset dir=$1
+  typeset idirs=
+  for subdir in $(find $dir/ -type d); do
+    found_file=0
+    for suffix in $file_suffix; do
+      if [ -n "$(ls $subdir/*.$suffix 2>/dev/null)" ]; then
+        found_file=1
+        break
+      fi
+    done
+    if [ $found_file -eq 0 ]; then 
+      continue
+    fi
+    echo $subdir
+  done
+}
+
+rm -f tags
+rm -f cscope*.out
+
+all_dirs=
+num_dirs=0
+#all_dirs_for_cscope=
+for fldirs in $first_level_dirs; do
+  idirs=$(find_interesting_subdirs $PWD/$fldirs)
+  for dir in $idirs; do
+    rm -f $dir/tags
+    rm -f $dir/cscope*.out
+    printf "Tagging %s ... " $dir
+    ctags -a $dir/*
+    ln -sf $PWD/tags $dir/tags
+    echo "done!"
+    all_dirs="$all_dirs $dir"
+    num_dirs=$(expr $num_dirs + 1)
+#    all_dirs_for_cscope="$all_dirs_for_cscope -s $dir"
+  done
+done
+printf "Cscoping %i dirs ... " $num_dirs
+#cscope -bRq $all_dirs_for_cscope
+cscope -bRq
+for dir in $all_dirs; do
+  ln -sf $PWD/cscope*.out $dir/
+done
+echo "done!"

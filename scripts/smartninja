@@ -1,0 +1,11 @@
+#!/bin/bash
+
+requiredFile=build.ninja
+if [ ! -e $requiredFile ]; then
+  echo "ERROR: Cannot find '$requiredFile' directory."
+  exit 1
+fi
+
+threads=$(freecpus 8)
+set -x
+time -p ninja -j $threads "$@"
