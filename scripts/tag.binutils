@@ -25,6 +25,8 @@ h \
 hpp \
 "
 
+git_repo_root_dirs=$(find $PWD -name .git | sed -e 's|\(.*\)\/\.git|\1|')
+
 echo "Using ctags from $(which ctags)"
 echo "Using cscope from $(which cscope)"
 # If directory contains at least type in $file_suffix, print the directory to stdout
@@ -39,7 +41,10 @@ find_interesting_subdirs() {
         break
       fi
     done
-    if [ $found_file -eq 0 ]; then 
+    if [ -d $subdir/.git ]; then
+      found_file=1
+    fi
+    if [ $found_file -eq 0 ]; then
       continue
     fi
     echo $subdir
@@ -49,27 +54,29 @@ find_interesting_subdirs() {
 rm -f tags
 rm -f cscope*.out
 
-all_dirs=
+all_dirs=$git_repo_root_dirs
 num_dirs=0
-#all_dirs_for_cscope=
+printf "Tagging %s ... \n" $first_level_dirs
+ctags --langmap=c++:+.inc --exclude=cscope.* -Ra ${PWD}/${first_level_dirs}
+echo "done!"
 for fldirs in $first_level_dirs; do
+  if [ ! -e $fldirs ]; then
+    echo "WARNING: Cannot find '$fldirs'. Skipping ... "
+    continue
+  fi
   idirs=$(find_interesting_subdirs $PWD/$fldirs)
   for dir in $idirs; do
-    rm -f $dir/tags
     rm -f $dir/cscope*.out
-    printf "Tagging %s ... " $dir
-    ctags -a $dir/*
-    ln -sf $PWD/tags $dir/tags
-    echo "done!"
     all_dirs="$all_dirs $dir"
     num_dirs=$(expr $num_dirs + 1)
-#    all_dirs_for_cscope="$all_dirs_for_cscope -s $dir"
   done
 done
 printf "Cscoping %i dirs ... " $num_dirs
-#cscope -bRq $all_dirs_for_cscope
 cscope -bRq
 for dir in $all_dirs; do
+  if [ "$dir" = $PWD ]; then
+    continue
+  fi
   ln -sf $PWD/cscope*.out $dir/
 done
 echo "done!"
