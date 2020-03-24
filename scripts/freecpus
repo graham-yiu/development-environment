@@ -1,30 +1,45 @@
 #!/bin/bash
 
+# Default values
 min_threads=1
 max_threads=24
-# User can override min/max threads to use
+
+Usage() {
+cat << EOF
+Usage: $(basename $0) [<min_threads>]
+
+       <min_threads>  Minimum number to return even if there are less CPUs
+                      available. Default is '$min_threads'.
+EOF
+}
+
+# User can override min threads to use
 if [ -n "$1" ]; then
   min_threads=$1
 fi
-if [ -n "$2" ]; then
-  max_threads=$2
+
+# if 'nproc' command exists, use it as the number of CPUs available, else fall
+# back to 'lscpu', then 'max_threads' if all else fails.
+if [ -n "$(nproc)" ]; then
+  sys_threads=$(nproc)
+else
+  sys_threads=$(lscpu -p | grep -v "^#" |wc -l )
+  if [ -z "$sys_threads" ]; then
+    echo "WARNING: Cannot determine total CPUs available in system.  Assuming '$max_threads' CPUs available." >&2
+    sys_threads=$max_threads
+  fi
 fi
 
-sys_threads=$(lscpu -p | grep -v "^#" |wc -l )
-if [ -z "$sys_threads" ]; then
-  echo "WARNING: Cannot determine total CPUs available in system.  Assuming '$max_threads' CPUs available." >&2
-  sys_threads=$max_threads
-fi
-
+# Use 'uptime' to determine current machine load, round up decimal points.
 load_float=$(uptime | sed -e 's|.*load average: \([0-9]\{1,\}\.[0-9]\{2\}\).*|\1|')
 if [ -n "$load_float" ]; then
-  load_int=$(echo "($load_float+0.5)/1" |bc) 
+  load_int=$(echo "($load_float+0.5)/1" |bc)
   threads=$(expr $sys_threads - $load_int)
   if [ $threads -lt $min_threads ]; then
     threads=$min_threads
-  fi 
+  fi
 else
   echo "WARNING: Cannot get load average. Using job=$min_threads." >&2
   threads=$min_threads
-fi 
+fi
 printf $threads
