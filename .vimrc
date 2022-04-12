@@ -156,9 +156,19 @@ set csre
 " Else upward search directories until one is found.
 set tags=./tags;
 
+" Set the font for gVim
+set guifont="Courier 10 Pitch 18"
+
 " In Makefiles, don't expand tabs to spaces, since we need the actual tabs
 autocmd FileType make set noexpandtab
 
+" Reopen the last edited position in files
+au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g'\"" | endif
+
+" Tagbar customizations
+let g:tagbar_ctags_bin = '/u/grahamy/bin/ctags'
+let g:tagbar_position = 'topleft vertical'
+let g:tagbar_width = max([25, winwidth(0) / 5])
 "------------------------------------------------------------
 " Mappings {{{1
 "
@@ -168,6 +178,8 @@ autocmd FileType make set noexpandtab
 " which is the default
 map Y y$
 map <C-]> g<C-]>
+" Tagbar ON/OFF
+nmap <F8> :TagbarToggle<CR>
 " Clang-format
 map <C-K> :py3f /usr/share/clang/clang-format-3.8/clang-format.py<cr>
 imap <C-K> <c-o>:py3f /usr/share/clang/clang-format-3.8/clang-format.py<cr>
@@ -178,9 +190,10 @@ nnoremap <C-L> :nohl<CR><C-L>
  
 "------------------------------------------------------------
 augroup filetypedetect
-  au BufRead,BufNewFile *.cce      set filetype=cpp
+  au BufRead,BufNewFile *.cl       set filetype=opencl
   au BufRead,BufNewFile *.inc      set filetype=cpp
   au BufRead,BufNewFile *.def      set filetype=cpp
+  au BufRead,BufNewFile *.ii       set filetype=cpp
 " Enable syntax highlighting for LLVM files.
   au BufRead,BufNewFile *.ll       set filetype=llvm
   au BufRead,BufNewFile *.mlir     set filetype=llvm

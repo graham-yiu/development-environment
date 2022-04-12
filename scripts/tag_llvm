@@ -1,0 +1,74 @@
+#!/bin/bash
+
+###############################################################################
+# Used to create tags and cscope database for directories under llvm-project.
+#   - Expects monorepo source tree 
+#     llvm-project
+#     |--llvm
+#     |--clang
+#     |--lld
+#     |--build
+###############################################################################
+
+build_dir="build"
+llvm_dir_name="llvm"
+clang_dir_name="clang"
+lld_dir_name="lld"
+llvm_project_name="llvm-project"
+
+# Directories to scan for interesting files 
+first_level_dirs="\
+$llvm_dir_name/lib \
+$llvm_dir_name/include \
+$llvm_dir_name/unittests \
+$clang_dir_name/lib \
+$clang_dir_name/include \
+$clang_dir_name/unittests \
+$build_dir/lib/IR \
+$build_dir/lib/Target \
+$build_dir/tools/$clang_dir_name/include/clang \
+$build_dir/tools/$clang_dir_name/lib/Basic \
+$build_dir/tools/$lld_dir_name \
+$build_dir/tools/llvm-config \
+$build_dir/unittests/Option \
+"
+
+llvm_project_dir=$PWD
+while [ $llvm_project_dir != "/" ]; do
+  if [ $(basename $llvm_project_dir) == "$llvm_project_name" ]; then
+    cd $llvm_project_dir
+    break
+  fi
+  llvm_project_dir=$(dirname $llvm_project_dir)
+done
+
+if [ $(basename $PWD) != "$llvm_project_name" ]; then
+  echo "ERROR: Can only run under '$llvm_project_name' source tree ... Aborting"
+  exit 1
+fi
+
+fl_real_dirs=
+for dir in $first_level_dirs; do
+  if [ ! -e $PWD/$dir ]; then
+    echo "WARNING: Cannot find '$PWD/$dir' ... Skipping "
+    continue;
+  fi
+  fl_real_dirs="$fl_real_dirs $PWD/$dir"
+done
+
+echo "Using ctags from $(which ctags)"
+echo "Using cscope from $(which cscope)"
+printf "Removing stale files ... "
+rm -f tags
+rm -f cscope*.out
+echo "done!"
+
+printf "Tagging %s ... \n" $fl_real_dirs
+ctags --langmap=c++:+.inc --exclude=cscope.* -Ra ${fl_real_dirs}
+echo "done!"
+printf "Cscoping ... "
+cscope -bRq
+echo "done!"
+if [ -x $HOME/scripts/findcscope ]; then
+  . $HOME/scripts/findcscope 
+fi

@@ -62,6 +62,7 @@ git_branch() {
 
 if [ "$color_prompt" = yes ]; then
   PS1='${debian_chroot:+($debian_chroot)}$? \[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;37m\]\w\[\033[00;36m\]$(git_branch)\[\033[00m\]\$ '
+  PS1='${debian_chroot:+($debian_chroot)}$? \[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;37m\]\w\[\033[00m\]$(git_branch)\[\033[00m\]\$ '
 else
   PS1='${debian_chroot:+($debian_chroot)}$? \u@\h:\w$(git_branch)\$ '
 fi
@@ -120,6 +121,19 @@ if ! shopt -oq posix; then
   fi
 fi
 
+# Force bash to autocomplete environment variables
+if ((BASH_VERSINFO[0] >= 4)) && ((BASH_VERSINFO[1] >= 2)); then
+  shopt -s direxpand
+fi
+# Check window size on every command
+shopt -s checkwinsize
+
+###############################################################################
+# Exports
+###############################################################################
+if [ -z "$DEFAULT_PATH" ]; then
+  export DEFAULT_PATH=$PATH
+fi
 # Reverse order for prepends to PATH
 #export PATH=<SOME_PATH>:${PATH}
 # Natural order for appends to PATH
@@ -130,11 +144,27 @@ fi
 #export https_proxy=
 #export no_proxy=
 
-export DISPLAY=:1.0
+# Display is set automatically by SSH to 'localhost:N.0'
+#export DISPLAY=:0.0
 
+# Prevent pop-up for SSH authentication
+unset SSH_ASKPASS
+
+###############################################################################
+# Aliases
+###############################################################################
 alias gmake=make
 alias git-log-merges="git log --graph --decorate=auto --oneline"
 alias git-log="git log --graph --decorate=auto --no-merges"
 alias cp="cp -i"
 alias mv="mv -i"
+alias sshyc="ssh -Y -C"
+alias lrta="ls -lrtA"
+alias ctags=$HOME/bin/ctags
+alias readtags=$HOME/bin/readtags
+alias vim=$HOME/bin/vim
+alias reset_env=". $HOME/scripts/reset_env"
+alias refresh_display=". $HOME/scripts/refresh_display"
+alias findcscope=". $HOME/scripts/findcscope"
 set -o vi
+#stty erase '^?'

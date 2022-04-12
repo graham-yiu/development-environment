@@ -1,0 +1,6 @@
+#!/bin/bash
+
+if [ -n "$DEFAULT_PATH" ]; then
+  export PATH=$DEFAULT_PATH
+fi
+. $HOME/.bashrc

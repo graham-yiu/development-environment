@@ -1,0 +1,8 @@
+#!/bin/bash
+
+found=$(find $PWD -name cscope.out -type f)
+if [ -n "$found" ]; then
+  export CSCOPE_DB=$found
+else
+  echo "ERROR: Can't find cscope.out!"
+fi

@@ -1,0 +1,32 @@
+#!/bin/bash
+
+###############################################################################
+# Used to create tags and cscope database for directories in $PWD and supplied 
+# by arguments, if any.
+###############################################################################
+
+#extra_dirs=
+#while [ -n "$1" ]; do
+#  if [ ! -e $1 ]; then
+#    echo "WARNING: Cannot find directory '$1'"
+#    continue
+#  fi
+#  extra_dirs="$extra_dirs $1"
+#  shift
+#done
+
+echo "Using ctags from $(which ctags)"
+echo "Using cscope from $(which cscope)"
+
+rm -f tags
+rm -f cscope*.out
+
+echo "Tagging ..."
+ctags --langmap=c++:+.inc --exclude=cscope.* -Ra 
+echo "Cscoping ..."
+#cscope_dirs=
+#for dir in $extra_dirs; do
+#  cscope_dirs="$cscope_dirs -s $dir"
+#done
+cscope -bRq
+findcscope

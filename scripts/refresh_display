@@ -1,0 +1,12 @@
+#!/bin/bash
+
+display_dir=$HOME/.screen
+display_file=$display_dir/$STY
+
+if [ ! -e $display_file ]; then
+  echo "ERROR: Cannot find '$display_file'. RC=1"
+  exit 1
+fi
+
+export DISPLAY=$(tail -1 $display_file)
+echo DISPLAY=$DISPLAY

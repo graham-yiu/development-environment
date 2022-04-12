@@ -1,0 +1,11 @@
+#!/bin/bash
+
+screen_dir=$HOME/.screen
+
+if [ -z "$1" ]; then
+  echo "Must supply screen session name. RC=1"
+  exit 1
+fi
+
+echo $DISPLAY >$screen_dir/$1
+screen -D -r $1

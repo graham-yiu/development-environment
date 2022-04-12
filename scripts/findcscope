@@ -1,0 +1,14 @@
+#!/bin/bash
+
+cscope_file=cscope.out
+parent_dir=$PWD
+while [ $parent_dir != "/" ]; do
+  cscope_out=$parent_dir/$cscope_file
+  if [ ! -e $cscope_out ]; then
+    parent_dir=$(dirname $parent_dir)
+    continue
+  fi
+  export CSCOPE_DB=$cscope_out
+  echo CSCOPE_DB=$CSCOPE_DB
+  break
+done
